@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/coder/websocket"
@@ -19,9 +21,15 @@ func hello(w http.ResponseWriter, _ *http.Request) {
 }
 
 func createWebhookEndpoint(w http.ResponseWriter, r *http.Request) {
-	id := shortuuid.New()
+	dev := os.Getenv("ENVIRONMENT") == "development"
+	var id string
+	if dev {
+		id = "test-webhook-id"
+	} else {
+		id = shortuuid.New()
+	}
 	connections.Store(id, nil)
-	fmt.Fprintf(w, "Webhook endpoint created with ID: %s", id)
+	fmt.Fprintf(w, "%s", id)
 }
 
 func receiveWebhook(w http.ResponseWriter, r *http.Request) {
@@ -36,8 +44,21 @@ func receiveWebhook(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to read body", http.StatusBadRequest)
 		return
 	}
+	headers := make(map[string]string)
+	for key, values := range r.Header {
+		headers[key] = values[0]
+	}
+	message := map[string]any{
+		"headers": headers,
+		"body":    string(payload),
+	}
+	jsonData, err := json.Marshal(message)
+	if err != nil {
+		http.Error(w, "Failed to marshal message", http.StatusInternalServerError)
+		return
+	}
 	if conn, ok := connections.Load(id); ok {
-		err := conn.(*websocket.Conn).Write(context.Background(), websocket.MessageText, payload)
+		err := conn.(*websocket.Conn).Write(context.Background(), websocket.MessageText, jsonData)
 		if err != nil {
 			log.Println("WebSocket write error:", err)
 			http.Error(w, "Failed to send to client", http.StatusInternalServerError)
@@ -57,7 +78,6 @@ func handleConnect(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Webhook endpoint not found", http.StatusNotFound)
 		return
 	}
-	fmt.Fprintf(w, "Connecting to webhook endpoint with ID: %s", id)
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		log.Println("WebSocket accept error:", err)
