@@ -16,8 +16,8 @@ import (
 var BASE_URL string
 var WS_PROTOCOL string
 var HTTP_PROTOCOL string
-var PORT string
-var FORWARD_ENDPOINT string
+var PORT string = "3000"
+var FORWARD_ENDPOINT string = "/"
 
 func getEndpoint() string {
 	url := fmt.Sprintf("%s%s/webhook", HTTP_PROTOCOL, BASE_URL)
@@ -111,7 +111,7 @@ func connectWebSocket(id string) {
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Println("Usage: whrelay <local-port> <endpoint>")
+		fmt.Println("Usage: whrelay <local-port> <local-endpoint>")
 		return
 	}
 	PORT = os.Args[1]
@@ -122,7 +122,7 @@ func main() {
 		WS_PROTOCOL = "ws://"
 		HTTP_PROTOCOL = "http://"
 	} else {
-		BASE_URL = "whrelay.example.com"
+		BASE_URL = "wh-relay.azurewebsites.net"
 		WS_PROTOCOL = "wss://"
 		HTTP_PROTOCOL = "https://"
 	}

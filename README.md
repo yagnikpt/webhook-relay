@@ -23,26 +23,31 @@ A lightweight, self-hosted webhook relay server written in Go. Similar to ngrok 
    go mod tidy
    ```
 
-3. Build the server:
+3. Build the binaries:
    ```bash
-   go build -o whrelay ./cmd/whrelay
+   make all
    ```
+   This builds both the CLI client (`whrelay`) and the server (`server/whrelay_server`).
 
 ## Usage
 
-1. Start the server:
+1. Start the server (only for local setup):
    ```bash
-   ./whrelay
+   make server
    ```
    The server will run on `http://localhost:8080`.
 
-2. Create a webhook endpoint:
-   - Visit `http://localhost:8080/webhook` to generate a unique ID.
+2. In another terminal, start the client:
+   ```bash
+   ENVIRONMENT=development go run ./cmd/whrelay <local-port> <local-endpoint>
+   ```
+   OR
+   ```bash
+   ./whrelay <local-port> <local-endpoint>
+   ```
+   The client will create a webhook endpoint, connect via WebSocket, and relay incoming webhooks to `http://localhost:<local-port>/<local-endpoint>`.
 
-3. Connect a client:
-   - Use a WebSocket client to connect to `ws://localhost:8080/connect/{id}`.
-
-4. Send webhooks:
+3. Send webhooks:
    - External services can POST to `http://your-server:8080/webhook/{id}` to relay webhooks to the connected client.
 
 ## API Endpoints
@@ -54,8 +59,14 @@ A lightweight, self-hosted webhook relay server written in Go. Similar to ngrok 
 
 ## Development
 
-- Run tests: `go test ./...`
-- Build: `make build` (if Makefile is configured)
+- Download dependencies: `make download`
+- Tidy modules: `make tidy`
+- Format code: `make fmt`
+- Vet code: `make vet`
+- Run tests: `make test`
+- Build CLI: `make build-cli`
+- Build server: `make build-server`
+- Clean binaries: `make clean`
 
 ## Contributing
 
