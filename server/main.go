@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/coder/websocket"
+	"github.com/joho/godotenv"
 	"github.com/lithammer/shortuuid/v4"
 )
 
@@ -21,12 +22,17 @@ func hello(w http.ResponseWriter, _ *http.Request) {
 }
 
 func createWebhookEndpoint(w http.ResponseWriter, r *http.Request) {
+	user_id := r.Context().Value("user_id").(string)
 	dev := os.Getenv("ENVIRONMENT") == "development"
 	var id string
 	if dev {
 		id = "test-webhook-id"
 	} else {
-		id = shortuuid.New()
+		if _, ok := connections.Load(user_id); ok {
+			id = shortuuid.New()
+		} else {
+			id = user_id
+		}
 	}
 	connections.Store(id, nil)
 	fmt.Fprintf(w, "%s", id)
@@ -97,10 +103,12 @@ func handleConnect(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	godotenv.Load()
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", hello)
-	mux.HandleFunc("GET /webhook", createWebhookEndpoint)
+	mux.HandleFunc("GET /auth", createToken)
+	mux.Handle("GET /webhook", authMiddleware(http.HandlerFunc(createWebhookEndpoint)))
 	mux.HandleFunc("POST /webhook/{id}", receiveWebhook)
-	mux.HandleFunc("GET /connect/{id}", handleConnect)
+	mux.Handle("GET /connect/{id}", authMiddleware(http.HandlerFunc(handleConnect)))
 	http.ListenAndServe(":8080", mux)
 }

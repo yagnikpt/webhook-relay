@@ -22,11 +22,11 @@ build-server:
 
 .PHONY: cli
 cli:
-	ENVIRONMENT=development go run $(CLI_DIR)
+	go run $(CLI_DIR)
 
 .PHONY: server
 server:
-	ENVIRONMENT=development go run $(SERVER_DIR)
+	go run $(SERVER_DIR)
 
 .PHONY: download
 download:

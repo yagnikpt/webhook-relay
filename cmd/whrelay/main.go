@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+	"github.com/joho/godotenv"
+	"github.com/yagnikpt/webhook-relay/internal/auth"
 )
 
 var BASE_URL string
@@ -20,8 +22,20 @@ var PORT string = "3000"
 var FORWARD_ENDPOINT string = "/"
 
 func getEndpoint() string {
+	token, err := auth.GetTokenFromKeyring()
+	if err != nil {
+		fmt.Println("Error retrieving token from keyring:", err)
+		return ""
+	}
 	url := fmt.Sprintf("%s%s/webhook", HTTP_PROTOCOL, BASE_URL)
-	resp, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return ""
+	}
+	req.Header.Add("Authorization", "Bearer "+token)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return ""
@@ -48,7 +62,19 @@ func connectWebSocket(id string) {
 
 	endpoint := fmt.Sprintf("%s%s/connect/%s", WS_PROTOCOL, BASE_URL, id)
 
-	conn, _, err := websocket.Dial(ctx, endpoint, nil)
+	headers := http.Header{}
+	token, err := auth.GetTokenFromKeyring()
+	if err != nil {
+		fmt.Println("Error retrieving token from keyring:", err)
+		return
+	}
+	headers.Add("Authorization", "Bearer "+token)
+
+	opts := &websocket.DialOptions{
+		HTTPHeader: headers,
+	}
+
+	conn, _, err := websocket.Dial(ctx, endpoint, opts)
 	if err != nil {
 		fmt.Printf("%d", err)
 		return
@@ -110,12 +136,7 @@ func connectWebSocket(id string) {
 }
 
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("Usage: whrelay <local-port> <local-endpoint>")
-		return
-	}
-	PORT = os.Args[1]
-	FORWARD_ENDPOINT = os.Args[2]
+	godotenv.Load()
 	dev := os.Getenv("ENVIRONMENT") == "development"
 	if dev {
 		BASE_URL = "localhost:8080"
@@ -127,6 +148,28 @@ func main() {
 		HTTP_PROTOCOL = "https://"
 	}
 
+	if os.Args[1] == "login" {
+		err := auth.InitAuth(HTTP_PROTOCOL + BASE_URL)
+		if err != nil {
+			fmt.Println("Login failed:", err)
+		} else {
+			fmt.Println("Usage: whrelay <local-port> <local-endpoint>")
+		}
+		return
+	}
+	if err := auth.AuthGuard(); err != nil {
+		return
+	}
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: whrelay <local-port> <local-endpoint>")
+		return
+	}
+	PORT = os.Args[1]
+	FORWARD_ENDPOINT = os.Args[2]
+
 	endpointID := getEndpoint()
+	if endpointID == "" {
+		return
+	}
 	connectWebSocket(endpointID)
 }
