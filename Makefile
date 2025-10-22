@@ -1,7 +1,7 @@
 # Variables
 BINARY_NAME=whrelay
 SERVER_BINARY=whrelay_server
-SERVER_DIR=./server
+SERVER_DIR=./cmd/server
 CLI_DIR=./cmd/whrelay
 GOFLAGS=-ldflags="-s -w"
 GOOS?=$(shell go env GOOS)
@@ -18,7 +18,7 @@ build-cli:
 
 .PHONY: build-server
 build-server:
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(GOFLAGS) -o $(SERVER_DIR)/$(SERVER_BINARY) $(SERVER_DIR)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(GOFLAGS) -o $(SERVER_BINARY) $(SERVER_DIR)
 
 .PHONY: cli
 cli:

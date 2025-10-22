@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
+
+	"github.com/yagnikpt/webhook-relay/internal/config"
 )
 
 type DeviceCodeResponse struct {
@@ -23,13 +24,6 @@ type AccessTokenResponse struct {
 	Scope       string `json:"scope"`
 }
 
-var CLIENT_ID = func() string {
-	if env := os.Getenv("CLIENT_ID"); env != "" {
-		return env
-	}
-	return "Ov23licjIRxaBMP2jm14"
-}()
-
 func InitAuth(BASE_URL string) error {
 	accessToken, err := LoginWithDeviceFlow()
 	if err != nil {
@@ -45,6 +39,7 @@ func InitAuth(BASE_URL string) error {
 
 // LoginWithDeviceFlow initiates the OAuth2 device flow and returns the access token.
 func LoginWithDeviceFlow() (string, error) {
+	cfg := config.Load()
 	client := &http.Client{
 		Timeout: time.Second * 10,
 	}
@@ -53,7 +48,7 @@ func LoginWithDeviceFlow() (string, error) {
 	userInfoURL := "https://api.github.com/user"
 
 	deviceCodePayload := map[string]string{
-		"client_id": CLIENT_ID,
+		"client_id": cfg.GitHubClientID,
 		"scope":     "read:user",
 	}
 	body, _ := json.Marshal(deviceCodePayload)
@@ -86,7 +81,7 @@ func LoginWithDeviceFlow() (string, error) {
 		<-ticker.C
 
 		accessTokenPayload := map[string]string{
-			"client_id":   CLIENT_ID,
+			"client_id":   cfg.GitHubClientID,
 			"device_code": deviceCodeRes.DeviceCode,
 			"grant_type":  "urn:ietf:params:oauth:grant-type:device_code",
 		}

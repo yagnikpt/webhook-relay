@@ -1,17 +1,19 @@
-package main
+package auth
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
 
-func authMiddleware(next http.Handler) http.Handler {
+func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" || len(authHeader) < 7 || authHeader[:7] != "Bearer " {
+			log.Println("Missing or invalid Authorization header", "header", authHeader)
 			http.Error(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
 			return
 		}
@@ -21,6 +23,7 @@ func authMiddleware(next http.Handler) http.Handler {
 		client := &http.Client{Timeout: 10 * time.Second}
 		req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
 		if err != nil {
+			log.Println("Error creating request user info", "error", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -29,6 +32,7 @@ func authMiddleware(next http.Handler) http.Handler {
 
 		resp, err := client.Do(req)
 		if err != nil {
+			log.Println("Error validating token", "error", err)
 			http.Error(w, "Failed to validate token", http.StatusInternalServerError)
 			return
 		}

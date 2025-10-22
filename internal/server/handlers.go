@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -11,17 +11,16 @@ import (
 	"sync"
 
 	"github.com/coder/websocket"
-	"github.com/joho/godotenv"
 	"github.com/lithammer/shortuuid/v4"
 )
 
 var connections sync.Map
 
-func hello(w http.ResponseWriter, _ *http.Request) {
+func HelloHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello, World!")
 }
 
-func createWebhookEndpoint(w http.ResponseWriter, r *http.Request) {
+func CreateWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	user_id := r.Context().Value("user_id").(string)
 	dev := os.Getenv("ENVIRONMENT") == "development"
 	var id string
@@ -38,15 +37,17 @@ func createWebhookEndpoint(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", id)
 }
 
-func receiveWebhook(w http.ResponseWriter, r *http.Request) {
+func ReceiveWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	_, exists := connections.Load(id)
 	if !exists {
+		log.Println("Webhook endpoint not found", "id", id)
 		http.Error(w, "Webhook endpoint not found", http.StatusNotFound)
 		return
 	}
 	payload, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.Println("Failed to read body", "error", err)
 		http.Error(w, "Failed to read body", http.StatusBadRequest)
 		return
 	}
@@ -60,33 +61,36 @@ func receiveWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonData, err := json.Marshal(message)
 	if err != nil {
+		log.Println("Failed to marshal message", "error", err)
 		http.Error(w, "Failed to marshal message", http.StatusInternalServerError)
 		return
 	}
 	if conn, ok := connections.Load(id); ok {
 		err := conn.(*websocket.Conn).Write(context.Background(), websocket.MessageText, jsonData)
 		if err != nil {
-			log.Println("WebSocket write error:", err)
+			log.Println("WebSocket write error:", "error", err)
 			http.Error(w, "Failed to send to client", http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "Webhook forwarded to client %s", id)
 	} else {
+		log.Println("Client not connected", "id", id)
 		http.Error(w, "Client not connected", http.StatusNotFound)
 	}
 }
 
-func handleConnect(w http.ResponseWriter, r *http.Request) {
+func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	_, exists := connections.Load(id)
 	if !exists {
+		log.Println("Webhook endpoint not found", "id", id)
 		http.Error(w, "Webhook endpoint not found", http.StatusNotFound)
 		return
 	}
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
-		log.Println("WebSocket accept error:", err)
+		log.Println("WebSocket accept error:", "error", err)
 		return
 	}
 	connections.Store(id, conn)
@@ -100,14 +104,4 @@ func handleConnect(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-}
-
-func main() {
-	godotenv.Load()
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /", hello)
-	mux.Handle("GET /webhook", authMiddleware(http.HandlerFunc(createWebhookEndpoint)))
-	mux.HandleFunc("POST /webhook/{id}", receiveWebhook)
-	mux.Handle("GET /connect/{id}", authMiddleware(http.HandlerFunc(handleConnect)))
-	http.ListenAndServe(":8080", mux)
 }

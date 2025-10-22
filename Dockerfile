@@ -8,7 +8,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -ldflags="-s -w" -o whrelay_server ./server
+RUN go build -ldflags="-s -w" -o whrelay_server ./cmd/server
 
 FROM alpine:latest
 
