@@ -23,6 +23,13 @@ type AccessTokenResponse struct {
 	Scope       string `json:"scope"`
 }
 
+var CLIENT_ID = func() string {
+	if env := os.Getenv("CLIENT_ID"); env != "" {
+		return env
+	}
+	return "Ov23licjIRxaBMP2jm14"
+}()
+
 func InitAuth(BASE_URL string) error {
 	user_id, err := LoginWithDeviceFlow()
 	if err != nil {
@@ -49,9 +56,6 @@ func InitAuth(BASE_URL string) error {
 
 // LoginWithDeviceFlow initiates the OAuth2 device flow and returns the authenticated user's ID.
 func LoginWithDeviceFlow() (int, error) {
-	client_id := os.Getenv("CLIENT_ID")
-	// PAT := os.Getenv("GITHUB_TOKEN")
-
 	client := &http.Client{
 		Timeout: time.Second * 10,
 	}
@@ -60,7 +64,7 @@ func LoginWithDeviceFlow() (int, error) {
 	userInfoURL := "https://api.github.com/user"
 
 	deviceCodePayload := map[string]string{
-		"client_id": client_id,
+		"client_id": CLIENT_ID,
 		"scope":     "read:user",
 	}
 	body, _ := json.Marshal(deviceCodePayload)
@@ -71,7 +75,6 @@ func LoginWithDeviceFlow() (int, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/vnd.github+json")
-	// req.Header.Set("Authorization", "token "+PAT)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -94,7 +97,7 @@ func LoginWithDeviceFlow() (int, error) {
 		<-ticker.C
 
 		accessTokenPayload := map[string]string{
-			"client_id":   client_id,
+			"client_id":   CLIENT_ID,
 			"device_code": deviceCodeRes.DeviceCode,
 			"grant_type":  "urn:ietf:params:oauth:grant-type:device_code",
 		}
@@ -104,7 +107,6 @@ func LoginWithDeviceFlow() (int, error) {
 			fmt.Println("Error creating request:", err)
 			return 0, err
 		}
-		// req.Header.Set("Authorization", "token "+PAT)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Accept", "application/vnd.github+json")
 

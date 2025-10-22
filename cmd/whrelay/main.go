@@ -83,7 +83,7 @@ func connectWebSocket(id string) {
 	defer conn.Close(websocket.StatusNormalClosure, "")
 
 	receiveEndpoint := fmt.Sprintf("%s%s/webhook/%s", HTTP_PROTOCOL, BASE_URL, id)
-	fmt.Println("Listening for webhook on endpoint: " + receiveEndpoint + "\n")
+	fmt.Println("Forwarding webhooks\nPOST "+receiveEndpoint, "->", "http://localhost:"+PORT+FORWARD_ENDPOINT+"\n")
 
 	for {
 		msgtype, msg, err := conn.Read(context.Background())
