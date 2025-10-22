@@ -106,7 +106,6 @@ func main() {
 	godotenv.Load()
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", hello)
-	mux.HandleFunc("GET /auth", createToken)
 	mux.Handle("GET /webhook", authMiddleware(http.HandlerFunc(createWebhookEndpoint)))
 	mux.HandleFunc("POST /webhook/{id}", receiveWebhook)
 	mux.Handle("GET /connect/{id}", authMiddleware(http.HandlerFunc(handleConnect)))

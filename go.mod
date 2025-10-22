@@ -4,7 +4,6 @@ go 1.25.3
 
 require (
 	github.com/coder/websocket v1.8.14
-	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lithammer/shortuuid/v4 v4.2.0
 	github.com/zalando/go-keyring v0.2.6

@@ -31,31 +31,20 @@ var CLIENT_ID = func() string {
 }()
 
 func InitAuth(BASE_URL string) error {
-	user_id, err := LoginWithDeviceFlow()
+	accessToken, err := LoginWithDeviceFlow()
 	if err != nil {
 		return err
 	}
 
-	authURL := fmt.Sprintf("%s/auth?user_id=%d", BASE_URL, user_id)
-	resp, err := http.Get(authURL)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	var tokenRes map[string]string
-	if err := json.NewDecoder(resp.Body).Decode(&tokenRes); err != nil {
-		return err
-	}
-
-	err = SaveTokenToKeyring(tokenRes["token"])
+	err = SaveTokenToKeyring(accessToken)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// LoginWithDeviceFlow initiates the OAuth2 device flow and returns the authenticated user's ID.
-func LoginWithDeviceFlow() (int, error) {
+// LoginWithDeviceFlow initiates the OAuth2 device flow and returns the access token.
+func LoginWithDeviceFlow() (string, error) {
 	client := &http.Client{
 		Timeout: time.Second * 10,
 	}
@@ -71,7 +60,7 @@ func LoginWithDeviceFlow() (int, error) {
 	req, err := http.NewRequest("POST", deviceCodeURL, bytes.NewBuffer(body))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
-		return 0, err
+		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/vnd.github+json")
@@ -79,7 +68,7 @@ func LoginWithDeviceFlow() (int, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error making request:", err)
-		return 0, err
+		return "", err
 	}
 	defer resp.Body.Close()
 
@@ -105,7 +94,7 @@ func LoginWithDeviceFlow() (int, error) {
 		req, err := http.NewRequest("POST", accessTokenURL, bytes.NewBuffer(body))
 		if err != nil {
 			fmt.Println("Error creating request:", err)
-			return 0, err
+			return "", err
 		}
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Accept", "application/vnd.github+json")
@@ -113,7 +102,7 @@ func LoginWithDeviceFlow() (int, error) {
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("Error making request:", err)
-			return 0, err
+			return "", err
 		}
 		defer resp.Body.Close()
 
@@ -126,7 +115,7 @@ func LoginWithDeviceFlow() (int, error) {
 			req, err := http.NewRequest("GET", userInfoURL, nil)
 			if err != nil {
 				fmt.Println("Error creating request:", err)
-				return 0, err
+				return "", err
 			}
 			req.Header.Set("Authorization", "Bearer "+accessTokenRes.AccessToken)
 			req.Header.Set("Accept", "application/vnd.github+json")
@@ -134,17 +123,17 @@ func LoginWithDeviceFlow() (int, error) {
 			resp, err := client.Do(req)
 			if err != nil {
 				fmt.Println("Error making request:", err)
-				return 0, err
+				return "", err
 			}
 			defer resp.Body.Close()
 
 			var userInfo map[string]any
 			if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
-				panic(err)
+				return "", err
 			}
 
 			fmt.Printf("Authentication successful! Welcome, %s\n", userInfo["login"])
-			return int(userInfo["id"].(float64)), nil
+			return accessTokenRes.AccessToken, nil
 		}
 	}
 }

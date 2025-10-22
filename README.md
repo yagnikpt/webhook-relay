@@ -31,7 +31,7 @@ A lightweight, self-hosted webhook relay server written in Go. Similar to ngrok 
 
 ## Usage
 
-1. Start the server (only for local setup):
+1. Start the server:
    ```bash
    make server
    ```
@@ -39,16 +39,12 @@ A lightweight, self-hosted webhook relay server written in Go. Similar to ngrok 
 
 2. In another terminal, start the client:
    ```bash
-   ENVIRONMENT=development go run ./cmd/whrelay <local-port> <local-endpoint>
+   make cli
    ```
-   OR
-   ```bash
-   ./whrelay <local-port> <local-endpoint>
-   ```
-   The client will create a webhook endpoint, connect via WebSocket, and relay incoming webhooks to `http://localhost:<local-port>/<local-endpoint>`.
+   The client will authenticate with GitHub using device flow, save the access token, create a webhook endpoint, connect via WebSocket, and relay incoming webhooks to `http://localhost:3000` (adjust in code if needed).
 
 3. Send webhooks:
-   - External services can POST to `http://your-server:8080/webhook/{id}` to relay webhooks to the connected client.
+   - External services can POST to `http://your-server:8080/webhook/{id}` with `Authorization: Bearer <github_token>` to relay webhooks to the connected client.
 
 ## API Endpoints
 
