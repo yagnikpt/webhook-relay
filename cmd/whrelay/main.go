@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/coder/websocket"
@@ -136,6 +137,10 @@ func connectWebSocket(id string) {
 }
 
 func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("Usage: whrelay <local-port> <local-endpoint>")
+		return
+	}
 	godotenv.Load()
 	dev := os.Getenv("ENVIRONMENT") == "development"
 	if dev {
@@ -165,7 +170,16 @@ func main() {
 		return
 	}
 	PORT = os.Args[1]
+	_, err := strconv.Atoi(PORT)
+	if err != nil {
+		fmt.Println("Invalid port number")
+		return
+	}
 	FORWARD_ENDPOINT = os.Args[2]
+	if FORWARD_ENDPOINT[0] != '/' {
+		fmt.Println("Endpoint should start with '/'")
+		return
+	}
 
 	endpointID := getEndpoint()
 	if endpointID == "" {
