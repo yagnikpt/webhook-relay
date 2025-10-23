@@ -136,7 +136,7 @@ func connectWebSocket(id string) {
 				continue
 			}
 			resp.Body.Close()
-			fmt.Println("POST", FORWARD_ENDPOINT, resp.StatusCode, resp.Status)
+			fmt.Println("POST", FORWARD_ENDPOINT, resp.Status)
 		}
 	}
 }

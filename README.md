@@ -2,6 +2,8 @@
 
 A lightweight, self-hosted webhook relay server written in Go. Similar to ngrok or smee.io, it allows external services (like GitHub, Stripe, etc.) to send webhooks to your local development server securely.
 
+https://github.com/user-attachments/assets/971e20fd-c11a-4efb-a876-35771962051d
+
 ## Features
 
 - **Webhook Forwarding**: Receive webhooks from external services and forward them to connected clients via WebSocket.
