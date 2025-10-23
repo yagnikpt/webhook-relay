@@ -14,6 +14,7 @@ import (
 	"github.com/coder/websocket"
 	"github.com/joho/godotenv"
 	"github.com/yagnikpt/webhook-relay/internal/auth"
+	"github.com/yagnikpt/webhook-relay/internal/utils"
 )
 
 var BASE_URL string
@@ -82,15 +83,22 @@ func connectWebSocket(id string) {
 	}
 	defer conn.Close(websocket.StatusNormalClosure, "")
 
+	userName, err := auth.GetUserName()
+	if err != nil {
+		fmt.Println("Error retrieving username:", err)
+		return
+	}
+
 	receiveEndpoint := fmt.Sprintf("%s%s/webhook/%s", HTTP_PROTOCOL, BASE_URL, id)
-	fmt.Println("Forwarding webhooks\nPOST "+receiveEndpoint, "->", "http://localhost:"+PORT+FORWARD_ENDPOINT+"\n")
+	forwardEndpoint := "http://localhost:" + PORT + FORWARD_ENDPOINT
+
+	utils.PrintInitialTUI(userName, receiveEndpoint, forwardEndpoint)
 
 	for {
 		msgtype, msg, err := conn.Read(context.Background())
 		if err != nil {
 			break
 		}
-		fmt.Printf("Received webhook payload: %s\n", string(msg))
 		if msgtype == websocket.MessageText {
 			var data map[string]any
 			err := json.Unmarshal(msg, &data)
@@ -109,9 +117,7 @@ func connectWebSocket(id string) {
 				continue
 			}
 
-			localUrl := "http://localhost:" + PORT + FORWARD_ENDPOINT
-
-			req, err := http.NewRequest("POST", localUrl, bytes.NewBufferString(body))
+			req, err := http.NewRequest("POST", forwardEndpoint, bytes.NewBufferString(body))
 			if err != nil {
 				fmt.Println("Error creating request:", err)
 				continue
@@ -126,12 +132,11 @@ func connectWebSocket(id string) {
 			client := &http.Client{}
 			resp, err := client.Do(req)
 			if err != nil {
-				fmt.Println("Error sending request to local server:", err)
+				fmt.Println("ERROR", "Connection Refused", forwardEndpoint)
 				continue
 			}
 			resp.Body.Close()
-
-			fmt.Printf("Sent webhook payload to %s\n", localUrl)
+			fmt.Println("POST", FORWARD_ENDPOINT, resp.StatusCode, resp.Status)
 		}
 	}
 }

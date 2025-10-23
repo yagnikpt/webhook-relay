@@ -19,7 +19,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", server.HelloHandler)
 	mux.Handle("GET /webhook", auth.Middleware(http.HandlerFunc(server.CreateWebhookHandler)))
-	mux.Handle("POST /webhooks/{id}", auth.Middleware(http.HandlerFunc(server.ReceiveWebhookHandler)))
+	mux.HandleFunc("POST /webhook/{id}", server.ReceiveWebhookHandler)
 	mux.Handle("GET /connect/{id}", auth.Middleware(http.HandlerFunc(server.ConnectHandler)))
 	http.ListenAndServe(":"+cfg.Port, mux)
 }
