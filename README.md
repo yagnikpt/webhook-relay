@@ -14,6 +14,13 @@ https://github.com/user-attachments/assets/971e20fd-c11a-4efb-a876-35771962051d
 
 ## Installation
 
+### Using Go
+```bash
+go install github.com/yagnikpt/webhook-relay/cmd/whrelay@latest
+```
+
+### From the source
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/yagnikpt/webhook-relay.git
@@ -27,26 +34,24 @@ https://github.com/user-attachments/assets/971e20fd-c11a-4efb-a876-35771962051d
 
 3. Build the binaries:
    ```bash
-   make all
+   make build-cli
    ```
-   This builds both the CLI client (`whrelay`) and the server (`server/whrelay_server`).
+   This only builds the CLI client (`whrelay`)
 
 ## Usage
 
-1. Start the server:
+1. Login (github oauth) by running:
    ```bash
-   make server
+   whrelay login
    ```
-   The server will run on `http://localhost:8080`.
-
-2. In another terminal, start the client:
+   - The client will authenticate with GitHub using device flow, save the access token.
+2. Start listening webhooks:
    ```bash
-   make cli
+   whrelay <local-port> <local-endpoint>
    ```
-   The client will authenticate with GitHub using device flow, save the access token, create a webhook endpoint, connect via WebSocket, and relay incoming webhooks to `http://localhost:3000` (adjust in code if needed).
-
+   - This creates a webhook endpoint, connect via WebSocket, and relay incoming webhooks to localhost:`<local-port>`/`<local-endpoint>`
 3. Send webhooks:
-   - External services can POST to `http://your-server:8080/webhook/{id}` with `Authorization: Bearer <github_token>` to relay webhooks to the connected client.
+   - External services can POST to `https://wh-relay.azurewebsites.net/webhook/{id}`
 
 ## API Endpoints
 
