@@ -153,7 +153,7 @@ func main() {
 		WS_PROTOCOL = "ws://"
 		HTTP_PROTOCOL = "http://"
 	} else {
-		BASE_URL = "wh-relay.azurewebsites.net"
+		BASE_URL = "webhook-relay-yay.fly.dev"
 		WS_PROTOCOL = "wss://"
 		HTTP_PROTOCOL = "https://"
 	}

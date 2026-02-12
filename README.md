@@ -51,7 +51,7 @@ go install github.com/yagnikpt/webhook-relay/cmd/whrelay@latest
    ```
    - This creates a webhook endpoint, connect via WebSocket, and relay incoming webhooks to localhost:`<local-port>`/`<local-endpoint>`
 3. Send webhooks:
-   - External services can POST to `https://wh-relay.azurewebsites.net/webhook/{id}`
+   - External services can POST to `BASE_URL/webhook/{id}`
 
 ## API Endpoints
 

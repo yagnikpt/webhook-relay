@@ -1,6 +1,6 @@
 .vscode
-whrelay
+./whrelay
 whrelay.exe
-whrelay_server
+./whrelay_server
 whrelay_server.exe
 .env
