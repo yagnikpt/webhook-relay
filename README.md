@@ -14,6 +14,12 @@ https://github.com/user-attachments/assets/971e20fd-c11a-4efb-a876-35771962051d
 
 ## Installation
 
+### Using Homebrew
+
+```bash
+brew install yagnikpt/tap/whrelay
+```
+
 ### Using Go
 ```bash
 go install github.com/yagnikpt/webhook-relay/cmd/whrelay@latest

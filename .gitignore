@@ -4,3 +4,4 @@ whrelay.exe
 ./whrelay_server
 whrelay_server.exe
 .env
+dist
